@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
@@ -103,7 +104,7 @@ public class Graph_generation : MonoBehaviour
 
             }
              else if(check==4){
-                
+                findWayPoints(Greedy(nodes[startPointCurrentPos], nodes[endPointCurrentPos]));
             }
             else if(check==5){
                 
@@ -313,6 +314,51 @@ public Node BFS(Node startNode, Node endNode)
     // If once all nodes have been visited the end node can't be found, return null.
     return null;
 }
+    
+    public Node Greedy(Node startNode, Node endNode)
+    {
+        Queue<Node> nodeQueue = new Queue<Node>();
+        endNode.visited = true;
+        nodeQueue.Enqueue(endNode);
+        float min = Vector3.Distance(endNode.location, startNode.location);
+        while (nodeQueue.Count > 0)
+        {
+            Node currentNode = nodeQueue.Dequeue();
+            Queue<Node> nodeMin = new Queue<Node>();
+            foreach (Node neighbour in currentNode.neighbours)
+            {
+                float distance = Vector3.Distance(neighbour.location, startNode.location);
+                if (!neighbour.visited)
+                {
+                    if ( distance < min)
+                    {
+                        
+                        nodeMin.Clear();
+                        nodeMin.Enqueue(neighbour);
+                        min = distance;
+                    }
+                    else if(distance == min)
+                        nodeMin.Enqueue(neighbour);
+                }
+            }
+            if (nodeMin.Count == 0)
+            {
+                foreach (Node neighbour in currentNode.neighbours)
+                    nodeMin.Enqueue(neighbour);
+            }
+            foreach(Node node in nodeMin)
+            {
+                node.parent = currentNode;
+                node.visited = true;
+                nodeQueue.Enqueue(node);
+                if (node == startNode)
+                {
+                    return node.parent;
+                }
+            }
+        }
+         return null;
+    }
 
     public void findWayPoints(Node node)
     {

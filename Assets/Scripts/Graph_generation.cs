@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -80,6 +81,8 @@ public class Graph_generation : MonoBehaviour
             {
                 node.visited = false;
                 node.parent = null;
+                Renderer wallRenderer = node.cube.GetComponent<Renderer>();
+                wallRenderer.material.color = Color.white;
             }
 
             endPointPreviousPosition = endPointCurrentPos;
@@ -132,7 +135,9 @@ public class Graph_generation : MonoBehaviour
                 if (wallGrid[i] == 1)
                 {
                     nodes[i].wall = true;
-                    Instantiate(wallPrefab, new Vector3(x * 10, 5f, z * 10), Quaternion.identity);
+                    nodes[i].cube = Instantiate(wallPrefab, new Vector3(x * 10, 5f, z * 10), Quaternion.identity);
+                  
+
                 }
                 
                 // Spawn tile
@@ -140,9 +145,9 @@ public class Graph_generation : MonoBehaviour
                 {
                     if(i%2==0){
                         nodes[i].coin = true;
-                        Instantiate(coinPrefab, new Vector3(x * 10, 1f, z * 10), Quaternion.identity);
+                        nodes[i].cube =  Instantiate(coinPrefab, new Vector3(x * 10, 1f, z * 10), Quaternion.identity);
                     }
-                    GameObject go = Instantiate(tilePrefab, new Vector3(x * 10, 0.005f, z * 10), Quaternion.identity);
+                    nodes[i].cube =  Instantiate(tilePrefab, new Vector3(x * 10, 0.005f, z * 10), Quaternion.identity);
                     
                 }
 
@@ -283,28 +288,27 @@ public Node BFS(Node startNode, Node endNode)
     while (nodeStack.Count > 0)
     {
         Node currentNode = nodeStack.Pop();
-
-        foreach (Node neighbour in currentNode.neighbours)
-        {
-            if (!neighbour.visited)
-            {
-                // Add current node to neighbour as its parent
-                neighbour.parent = currentNode;
-
-                // Check if neighbour is the start node
-                if (neighbour == startNode)
+                foreach (Node neighbour in currentNode.neighbours)
                 {
-                    return neighbour.parent;
+                    if (!neighbour.visited)
+                    {
+                        // Add current node to neighbour as its parent
+                        neighbour.parent = currentNode;
+
+                        // Check if neighbour is the start node
+                        if (neighbour == startNode)
+                        {
+                            return neighbour.parent;
+                        }
+
+                        // Mark neighbour as visited
+                        neighbour.visited = true;
+
+                        // Add neighbour to stack for further exploration
+                        nodeStack.Push(neighbour);
+                    }
                 }
-
-                // Mark neighbour as visited
-                neighbour.visited = true;
-
-                // Add neighbour to stack for further exploration
-                nodeStack.Push(neighbour);
-            }
         }
-    }
 
     // If once all nodes have been visited the end node can't be found, return null.
     return null;
@@ -320,6 +324,8 @@ public Node BFS(Node startNode, Node endNode)
 
         if (node.parent == null)
         {
+            Renderer wallRenderer = node.cube.GetComponent<Renderer>();
+            wallRenderer.material.color = Color.red;
             wayPoints.Add(node.location);
             return;
         }
@@ -328,19 +334,17 @@ public Node BFS(Node startNode, Node endNode)
         {
             wayPoints.Add(node.location);
             findWayPoints(node.parent);
+            Renderer wallRenderer = node.cube.GetComponent<Renderer>();
+            wallRenderer.material.color = Color.red;
         }
 
         agent.GetComponent<Agent_navigation>().target = pole;
-        
-        
     }
 
     public int getObjectTilePos(Transform someObject)
     {
         int x = (int)Mathf.Round(someObject.position.x/10);
-        //Debug.Log("x=" + x);
         int z = (int)Mathf.Round(someObject.position.z/10);
-        //Debug.Log("z=" + z);
 
         return x + z * width;
 
@@ -363,6 +367,7 @@ public class Node
     public List<Node> neighbours;
 
     public bool visited;
+    public GameObject cube;
 
     public Node(int _ID, Vector3 _location)
     {

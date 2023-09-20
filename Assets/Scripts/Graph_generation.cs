@@ -33,6 +33,7 @@ public class Graph_generation : MonoBehaviour
 
     public int endPointPreviousPosition;
     public int startPointPreviousPosition;
+    
 
 
 
@@ -94,6 +95,15 @@ public class Graph_generation : MonoBehaviour
             }
             else if(check==2){
                 findWayPoints(DFS(nodes[startPointCurrentPos], nodes[endPointCurrentPos]));
+            }
+            else if(check==3){
+
+            }
+             else if(check==4){
+                
+            }
+            else if(check==5){
+                
             }
             
         }
@@ -321,7 +331,8 @@ public Node BFS(Node startNode, Node endNode)
         }
 
         agent.GetComponent<Agent_navigation>().target = pole;
-
+        
+        
     }
 
     public int getObjectTilePos(Transform someObject)

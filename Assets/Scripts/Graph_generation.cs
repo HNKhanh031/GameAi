@@ -343,8 +343,16 @@ public Node BFS(Node startNode, Node endNode)
             }
             if (nodeMin.Count == 0)
             {
+                float max = Vector3.Distance(currentNode.neighbours[0].location, startNode.location);
                 foreach (Node neighbour in currentNode.neighbours)
-                    nodeMin.Enqueue(neighbour);
+                {
+                    float distance = Vector3.Distance(neighbour.location, startNode.location);
+                    if (distance <= max)
+                        nodeMin.Enqueue(neighbour);
+                    else
+                        max = distance;
+                }
+                    
             }
             foreach(Node node in nodeMin)
             {

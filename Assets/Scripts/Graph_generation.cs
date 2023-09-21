@@ -35,7 +35,7 @@ public class Graph_generation : MonoBehaviour
 
     public int endPointPreviousPosition;
     public int startPointPreviousPosition;
-    
+    public int depthLimit = 6;
 
 
 
@@ -101,7 +101,8 @@ public class Graph_generation : MonoBehaviour
                 findWayPoints(DFS(nodes[startPointCurrentPos], nodes[endPointCurrentPos]));
             }
             else if(check==3){
-
+                findWayPoints(DLS(nodes[startPointCurrentPos], nodes[endPointCurrentPos], depthLimit));
+               
             }
              else if(check==4){
                 findWayPoints(Greedy(nodes[startPointCurrentPos], nodes[endPointCurrentPos]));
@@ -112,11 +113,7 @@ public class Graph_generation : MonoBehaviour
             
         }
 
-       
     }
-
-    
-  
 
     public void spawTiles()
     {
@@ -137,8 +134,6 @@ public class Graph_generation : MonoBehaviour
                 {
                     nodes[i].wall = true;
                     nodes[i].cube = Instantiate(wallPrefab, new Vector3(x * 10, 5f, z * 10), Quaternion.identity);
-                  
-
                 }
                 
                 // Spawn tile
@@ -314,17 +309,43 @@ public Node BFS(Node startNode, Node endNode)
     // If once all nodes have been visited the end node can't be found, return null.
     return null;
 }
-    
+    public Node DLS(Node startNode, Node endNode, int depthLimit)
+    {
+        Stack<(Node node, int depth)> nodeStack = new Stack<(Node, int)>();
+        nodeStack.Push((endNode, 0));
+        while (nodeStack.Count > 0)
+        {
+            (Node currentNode, int depth) = nodeStack.Pop();
+            if (depth > depthLimit)
+                continue;
+            foreach (Node neighbour in currentNode.neighbours)
+            {
+                if (!neighbour.visited)
+                {
+                    neighbour.parent = currentNode;
+
+                    if (neighbour == startNode)
+                    {
+                        return neighbour.parent;
+                    }
+                    neighbour.visited = true;
+                    nodeStack.Push((neighbour, depth + 1));
+                }
+            }
+        }
+        return null;
+    }
+
     public Node Greedy(Node startNode, Node endNode)
     {
         Queue<Node> nodeQueue = new Queue<Node>();
         endNode.visited = true;
         nodeQueue.Enqueue(endNode);
-        float min = Vector3.Distance(endNode.location, startNode.location);
+        float min = Vector3.Distance(endNode.neighbours[0].location, startNode.location);
         while (nodeQueue.Count > 0)
         {
-            Node currentNode = nodeQueue.Dequeue();
-            Queue<Node> nodeMin = new Queue<Node>();
+           Node currentNode = nodeQueue.Dequeue();
+           List<Node> nodeMin = new List<Node>();
             foreach (Node neighbour in currentNode.neighbours)
             {
                 float distance = Vector3.Distance(neighbour.location, startNode.location);
@@ -332,37 +353,23 @@ public Node BFS(Node startNode, Node endNode)
                 {
                     if ( distance < min)
                     {
-                        
                         nodeMin.Clear();
-                        nodeMin.Enqueue(neighbour);
+                        nodeMin.Add(neighbour);
                         min = distance;
                     }
                     else if(distance == min)
-                        nodeMin.Enqueue(neighbour);
+                        nodeMin.Add(neighbour);
                 }
             }
-            if (nodeMin.Count == 0)
-            {
-                float max = Vector3.Distance(currentNode.neighbours[0].location, startNode.location);
-                foreach (Node neighbour in currentNode.neighbours)
-                {
-                    float distance = Vector3.Distance(neighbour.location, startNode.location);
-                    if (distance <= max)
-                        nodeMin.Enqueue(neighbour);
-                    else
-                        max = distance;
-                }
-                    
-            }
-            foreach(Node node in nodeMin)
+            foreach (Node node in nodeMin)
             {
                 node.parent = currentNode;
-                node.visited = true;
-                nodeQueue.Enqueue(node);
                 if (node == startNode)
                 {
-                    return node.parent;
+                    return node;
                 }
+                node.visited = true;
+                nodeQueue.Enqueue(node);
             }
         }
          return null;
@@ -370,27 +377,16 @@ public Node BFS(Node startNode, Node endNode)
 
     public void findWayPoints(Node node)
     {
-
-        if(node == null)
-        {
+        if (node == null)
             return;
-        }
+
+        //Renderer cubeRenderer = node.cube.GetComponent<Renderer>();
+        //cubeRenderer.material.color = Color.red;
+        wayPoints.Add(node.location);
 
         if (node.parent == null)
-        {
-            Renderer wallRenderer = node.cube.GetComponent<Renderer>();
-            wallRenderer.material.color = Color.red;
-            wayPoints.Add(node.location);
             return;
-        }
-
-        else
-        {
-            wayPoints.Add(node.location);
-            findWayPoints(node.parent);
-            Renderer wallRenderer = node.cube.GetComponent<Renderer>();
-            wallRenderer.material.color = Color.red;
-        }
+        findWayPoints(node.parent);
 
         agent.GetComponent<Agent_navigation>().target = pole;
     }
